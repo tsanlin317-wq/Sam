@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>သူနာပြုဖြစ်မယ့် ညီမလေးအတွက် လုပ်ငန်းစဉ်</title>
+    <style>
+        :root { --p-soft: #fff0f6; --p-main: #ff85c0; --p-dark: #eb2f96; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--p-soft); padding: 15px; margin: 0; color: #333; font-weight: 900; }
+        .container { max-width: 450px; margin: auto; }
+        .header { background: white; padding: 20px; border-radius: 20px; text-align: center; border: 2.5px solid var(--p-main); margin-bottom: 15px; }
+        h2 { color: var(--p-dark); margin: 0; font-size: 18px; }
+        .date-box { font-size: 14px; color: #888; margin-top: 5px; }
+        .section-title { font-size: 14px; color: white; background: var(--p-main); padding: 5px 15px; border-radius: 20px; display: inline-block; margin: 15px 0 10px; }
+        .task-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #ffeef6; }
+        .task-row { display: flex; align-items: center; gap: 12px; }
+        input[type="checkbox"] { width: 24px; height: 24px; accent-color: var(--p-dark); cursor: pointer; }
+        .task-text { font-size: 16px; flex-grow: 1; }
+        .note-input { width: 100%; border: none; border-bottom: 1px dashed #ddd; padding: 5px 0; font-size: 12px; color: #666; outline: none; margin-top: 8px; background: transparent; }
+        .time-box { display: inline-flex; align-items: center; background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 8px; font-size: 12px; margin-top: 8px; border: 1px solid #c8e6c9; }
+        .loader { display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 100; justify-content: center; align-items: center; }
+        .footer { text-align: center; font-size: 11px; color: #bbb; margin-top: 30px; padding-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div id="loading" class="loader">⚙️ စာရင်းစစ်နေသည်...</div>
+
+<div class="container">
+    <div class="header">
+        <h2>🩺 သူနာပြုဖြစ်မယ့် ညီမလေးအတွက် 🌸</h2>
+        <div class="date-box" id="todayDate"></div>
+    </div>
+
+    <div class="section-title">🌅 မနက်ပိုင်း (၆:၀၀ အိပ်ရာထ)</div>
+    <div class="task-card">
+        <div class="task-row"><input type="checkbox" id="t1" onchange="syncTask('t1', 'အိပ်ရာသိမ်းခြင်း')"><span class="task-text">အိပ်ရာသိမ်းခြင်း</span></div>
+        <div id="s1"></div>
+        <input type="text" id="n1" class="note-input" placeholder="မှတ်ချက်ရေးရန်..." onblur="syncTask('t1', 'အိပ်ရာသိမ်းခြင်း')">
+    </div>
+    <div class="task-card">
+        <div class="task-row"><input type="checkbox" id="t2" onchange="syncTask('t2', 'မျက်နှာသစ်၊ သွားတိုက်')"><span class="task-text">မျက်နှာသစ်၊ သွားတိုက်</span></div>
+        <div id="s2"></div>
+        <input type="text" id="n2" class="note-input" placeholder="မှတ်ချက်ရေးရန်..." onblur="syncTask('t2', 'မျက်နှာသစ်၊ သွားတိုက်')">
+    </div>
+
+    <div class="section-title">🌇 ညနေပိုင်း (ကျောင်းပြန်ရောက်ချိန်)</div>
+    <div class="task-card">
+        <div class="task-row"><input type="checkbox" id="t5" onchange="syncTask('t5', 'စာကျက်ခြင်း')"><span class="task-text">စာကျက်ခြင်း</span></div>
+        <div id="s5"></div>
+        <input type="text" id="n5" class="note-input" placeholder="မှတ်ချက်ရေးရန်..." onblur="syncTask('t5', 'စာကျက်ခြင်း')">
+    </div>
+
+    <div class="footer">🌸 ညီမလေးအတွက် အချစ်များစွာဖြင့် 🌸</div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5Hu2VjjNGCb5j0ZfCxpsNPpJrHGZGzHt5UX0q1qUwAShm94eOLFhoaXCYJYChXYx59A/exec";
+
+    window.onload = function() {
+        document.getElementById('todayDate').innerText = "ယနေ့ရက်စွဲ - " + new Date().toLocaleDateString();
+        loadCloudData();
+    };
+
+    async function loadCloudData() {
+        document.getElementById('loading').style.display = 'flex';
+        try {
+            const response = await fetch(SCRIPT_URL);
+            const data = await response.json();
+            data.forEach(row => {
+                const cb = document.getElementById(row[1]);
+                const sp = document.getElementById('s' + row[1].substring(1));
+                const note = document.getElementById('n' + row[1].substring(1));
+                if (cb && row[2]) {
+                    cb.checked = true;
+                    sp.innerHTML = `<div class="time-box">✅ ပြီးစီးချိန် - ${row[3]}</div>`;
+                }
+                if (note && row[4]) note.value = row[4];
+            });
+        } catch (e) { console.error("Data loading error"); }
+        document.getElementById('loading').style.display = 'none';
+    }
+
+    async function syncTask(id, name) {
+        const cb = document.getElementById(id);
+        const sp = document.getElementById('s' + id.substring(1));
+        const note = document.getElementById('n' + id.substring(1)).value;
+        let time = "";
+
+        if (cb.checked) {
+            const now = new Date();
+            time = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+            sp.innerHTML = `<div class="time-box">⏳ သိမ်းဆည်းနေသည်...</div>`;
+        } else {
+            sp.innerHTML = "";
+        }
+
+        await fetch(SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ id: id, status: cb.checked, time: time, note: note })
+        });
+        
+        if (cb.checked) sp.innerHTML = `<div class="time-box">✅ ပြီးစီးချိန် - ${time}</div>`;
+    }
+</script>
+</body>
+</html>
